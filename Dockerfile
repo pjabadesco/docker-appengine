@@ -1,85 +1,17 @@
-FROM php:5.6-apache
+FROM python:2-alpine
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apk update && apk add \
+    php5-cgi \
     git zip unzip \
-    python3 \
-    python3-dev \
-    -qq wget python \
-    libcurl4-openssl-dev \
-    libedit-dev \
-    libsqlite3-dev \
-    libssl-dev \
-    libxml2-dev \
-    zlib1g-dev \
-    freetds-dev \
-    freetds-bin \
-    freetds-common \
-    libdbd-freetds \
-    libsybdb5 \
-    libqt4-sql-tds \
-    libqt5sql5-tds \
-    libqxmlrpc-dev \
-    libmcrypt-dev \
-    libpng-dev \
-    libmemcached-dev \
-    unixodbc \
-    unixodbc-dev \
-    sendmail \
-    exiftool libpng-dev libjpeg62-turbo-dev libpng-dev libxpm-dev libfreetype6-dev \
-    && ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so \
-    && ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a \
-    && apt-get clean \
-    && rm -r /var/lib/apt/lists/*
-
-RUN docker-php-ext-configure pdo_odbc --with-pdo-odbc=unixODBC,/usr 
-# && docker-php-ext-configure mssql
-
-RUN docker-php-ext-configure gd --with-gd --with-webp-dir --with-jpeg-dir \
-    --with-png-dir --with-zlib-dir --with-xpm-dir --with-freetype-dir \
-    --enable-gd-native-ttf
-
-# RUN set -x \
-#     && cd /usr/src/php/ext/odbc \
-#     && phpize \
-#     && sed -ri 's@^ *test +"\$PHP_.*" *= *"no" *&& *PHP_.*=yes *$@#&@g' configure \
-#     && ./configure --with-unixODBC=shared,/usr \
-#     && docker-php-ext-install odbc
-
-# Memcache
-# RUN pecl install memcached-2.2.0 \
-#     && docker-php-ext-enable memcached
-
-# Redis
-# RUN pecl install -o -f redis-2.2.8 \
-#     && rm -rf /tmp/pear \
-#     && docker-php-ext-enable redis
-RUN pecl install redis-2.2.8 \
-    && docker-php-ext-enable redis
-# RUN curl -L -o /tmp/redis.tar.gz https://github.com/phpredis/phpredis/archive/2.2.7.tar.gz \
-#     && tar xfz /tmp/redis.tar.gz \
-#     && rm -r /tmp/redis.tar.gz \
-#     && mv phpredis-2.2.7 /usr/src/php/ext/redis \
-#     && docker-php-ext-install redis
-
-
-RUN docker-php-ext-configure exif \
-    && docker-php-ext-install bcmath calendar gettext exif gd pdo pdo_mysql curl json mbstring mysqli mcrypt zip mysql  pdo_odbc opcache
-# mssql pdo_dblib
-
-
-WORKDIR /
+    -qq wget 
 
 #install GAE
+WORKDIR /
 RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.zip && unzip google-cloud-sdk.zip && rm google-cloud-sdk.zip
 RUN google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --bash-completion=true --rc-path=/.bashrc --additional-components app-engine-python
 ENV PATH /google-cloud-sdk/bin:$PATH
 
-COPY conf/php.ini /usr/local/etc/php/
-COPY conf.d/ /usr/local/etc/php/conf.d/
-COPY conf/httpd.conf /etc/apache2/sites-available/000-default.conf
-
-RUN  chmod 755 /var/www/html -R
-COPY --chown=www-data:www-data www/ /var/www/html/
+# RUN docker-php-ext-install bcmath
 
 WORKDIR /var/www/html/
 # EXPOSE 8080
