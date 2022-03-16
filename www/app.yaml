@@ -1,0 +1,9 @@
+runtime: php55
+api_version: 1
+threadsafe: yes
+
+handlers:
+
+- url: /
+  script: index.php
+  secure: always

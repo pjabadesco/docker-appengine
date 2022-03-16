@@ -1,12 +1,74 @@
-FROM pjabadesco/php56-apache-mssql-mysql:1.7
+FROM php:5.6-apache
 
-RUN apt-get update \
-    && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git zip unzip \
     python3 \
-    python3-dev 
+    python3-dev \
+    -qq wget python \
+    libcurl4-openssl-dev \
+    libedit-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    libxml2-dev \
+    zlib1g-dev \
+    freetds-dev \
+    freetds-bin \
+    freetds-common \
+    libdbd-freetds \
+    libsybdb5 \
+    libqt4-sql-tds \
+    libqt5sql5-tds \
+    libqxmlrpc-dev \
+    libmcrypt-dev \
+    libpng-dev \
+    libmemcached-dev \
+    unixodbc \
+    unixodbc-dev \
+    sendmail \
+    exiftool libpng-dev libjpeg62-turbo-dev libpng-dev libxpm-dev libfreetype6-dev \
+    && ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so \
+    && ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a \
+    && apt-get clean \
+    && rm -r /var/lib/apt/lists/*
 
-#install python
-RUN apt-get install -y -qq wget python unzip
+RUN docker-php-ext-configure pdo_odbc --with-pdo-odbc=unixODBC,/usr 
+# && docker-php-ext-configure mssql
+
+RUN docker-php-ext-configure gd --with-gd --with-webp-dir --with-jpeg-dir \
+    --with-png-dir --with-zlib-dir --with-xpm-dir --with-freetype-dir \
+    --enable-gd-native-ttf
+
+# RUN set -x \
+#     && cd /usr/src/php/ext/odbc \
+#     && phpize \
+#     && sed -ri 's@^ *test +"\$PHP_.*" *= *"no" *&& *PHP_.*=yes *$@#&@g' configure \
+#     && ./configure --with-unixODBC=shared,/usr \
+#     && docker-php-ext-install odbc
+
+# Memcache
+# RUN pecl install memcached-2.2.0 \
+#     && docker-php-ext-enable memcached
+
+# Redis
+# RUN pecl install -o -f redis-2.2.8 \
+#     && rm -rf /tmp/pear \
+#     && docker-php-ext-enable redis
+RUN pecl install redis-2.2.8 \
+    && docker-php-ext-enable redis
+# RUN curl -L -o /tmp/redis.tar.gz https://github.com/phpredis/phpredis/archive/2.2.7.tar.gz \
+#     && tar xfz /tmp/redis.tar.gz \
+#     && rm -r /tmp/redis.tar.gz \
+#     && mv phpredis-2.2.7 /usr/src/php/ext/redis \
+#     && docker-php-ext-install redis
+
+
+RUN docker-php-ext-configure exif \
+    && docker-php-ext-install bcmath calendar gettext exif gd pdo pdo_mysql curl json mbstring mysqli mcrypt zip mysql  pdo_odbc opcache
+# mssql pdo_dblib
+
+
+WORKDIR /
+
 #install GAE
 RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.zip && unzip google-cloud-sdk.zip && rm google-cloud-sdk.zip
 RUN google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --bash-completion=true --rc-path=/.bashrc --additional-components app-engine-python
