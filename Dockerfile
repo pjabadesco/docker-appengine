@@ -74,8 +74,14 @@ RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.zip &
 RUN google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --bash-completion=true --rc-path=/.bashrc --additional-components app-engine-python
 ENV PATH /google-cloud-sdk/bin:$PATH
 
+COPY conf/php.ini /usr/local/etc/php/
+COPY conf.d/ /usr/local/etc/php/conf.d/
+COPY conf/httpd.conf /etc/apache2/sites-available/000-default.conf
+
+RUN  chmod 755 /var/www/html -R
+COPY --chown=www-data:www-data www/ /var/www/html/
+
 WORKDIR /var/www/html/
+# EXPOSE 8080
 
-EXPOSE 8080
-
-CMD ["dev_appserver.py", "--host=0.0.0.0", "."]
+CMD ["dev_appserver.py", "--host=0.0.0.0", "--php_executable_path=/usr/local/bin/php", "."]
